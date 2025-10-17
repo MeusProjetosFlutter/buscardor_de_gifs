@@ -14,19 +14,40 @@ class _HomepageState extends State<Homepage> {
   String? _search;
 
   Widget _createGifTable(BuildContext context, AsyncSnapshot snapshot) {
-    return GridView.builder(  //cria uma grade com colunas e linhas de widgets de acordo com o numero de itens
+    return GridView.builder(
       padding: EdgeInsets.all(10),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
+        crossAxisCount: 2,
         crossAxisSpacing: 10,
         mainAxisSpacing: 10,
       ),
-      itemCount: snapshot.data["data"].length,
+      itemCount: getGIFCount(snapshot.data["data"]),
       itemBuilder: (BuildContext context, int index) {
-        return GestureDetector(
-          child: Image.network(snapshot.data["data"][index]["images"]["fixed_height"]["url"], fit: BoxFit.cover,),
-
-        );
+        if (_search == null || index < snapshot.data["data"].length) {
+          return GestureDetector(
+            child: Image.network(
+              snapshot.data["data"][index]["images"]["fixed_height"]["url"],
+              fit: BoxFit.cover,
+            ),
+          );
+        } else {
+          return GestureDetector(
+            onTap: (){
+              setState(() {
+                _offset += 19;
+              });
+            },
+            child: Container(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.add, color: Colors.white, size: 70),
+                  Text("Carregar mais...", style: TextStyle(fontSize: 22, color: Colors.white),),
+                ],
+              ),
+            ),
+          );
+        }
       },
     );
   }
@@ -36,17 +57,25 @@ class _HomepageState extends State<Homepage> {
     if (_search == null) {
       response = await http.get(
         Uri.parse(
-          "https://api.giphy.com/v1/gifs/trending?api_key=Xmoh3lEaWH1mIxlKy4KX7xC6lOhJN6vn&limit=20&offset=0&rating=g&bundle=messaging_non_clips",
+          "https://api.giphy.com/v1/gifs/trending?api_key=Xmoh3lEaWH1mIxlKy4KX7xC6lOhJN6vn&limit=19&offset=0&rating=g&bundle=messaging_non_clips",
         ),
       );
     } else {
       response = await http.get(
         Uri.parse(
-          "https://api.giphy.com/v1/gifs/search?api_key=Xmoh3lEaWH1mIxlKy4KX7xC6lOhJN6vn&q=$_search&limit=20&$_offset&rating=g&lang=en&bundle=messaging_non_clips",
+          "https://api.giphy.com/v1/gifs/search?api_key=Xmoh3lEaWH1mIxlKy4KX7xC6lOhJN6vn&q=$_search&limit=19&offset=$_offset&rating=g&lang=en&bundle=messaging_non_clips",
         ),
       );
     }
     return json.decode(response.body);
+  }
+
+  int getGIFCount(List data) {
+    if (_search == null) {
+      return data.length -1;
+    } else {
+      return data.length + 1;
+    }
   }
 
   @override
@@ -80,9 +109,12 @@ class _HomepageState extends State<Homepage> {
               ),
               style: TextStyle(color: Colors.white, fontSize: 18.0),
               textAlign: TextAlign.center,
-              onSubmitted: (text) => setState(() {
-                _search = text;
-              }),
+              onSubmitted: (text) {
+                setState(() {
+                  _search = text;
+                  _offset = 0;
+                });
+              },
             ),
           ),
           Expanded(
