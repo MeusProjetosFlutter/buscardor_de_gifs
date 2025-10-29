@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import "package:buscardor_de_gifs/pages/gifpage.dart";
+import 'package:share_plus/share_plus.dart';
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -25,6 +27,16 @@ class _HomepageState extends State<Homepage> {
       itemBuilder: (BuildContext context, int index) {
         if (_search == null || index < snapshot.data["data"].length) {
           return GestureDetector(
+            onTap: () {
+              setState(() {
+                Navigator.push(context, MaterialPageRoute(builder: (context)=> GifPage(snapshot.data["data"][index])));
+              });
+            },
+            onLongPress: (){
+              SharePlus.instance.share(
+                  ShareParams(text: snapshot.data["data"][index]["images"]["fixed_height"]["url"])
+              );
+            },
             child: Image.network(
               snapshot.data["data"][index]["images"]["fixed_height"]["url"],
               fit: BoxFit.cover,
@@ -32,7 +44,7 @@ class _HomepageState extends State<Homepage> {
           );
         } else {
           return GestureDetector(
-            onTap: (){
+            onTap: () {
               setState(() {
                 _offset += 19;
               });
@@ -42,7 +54,10 @@ class _HomepageState extends State<Homepage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.add, color: Colors.white, size: 70),
-                  Text("Carregar mais...", style: TextStyle(fontSize: 22, color: Colors.white),),
+                  Text(
+                    "Carregar mais...",
+                    style: TextStyle(fontSize: 22, color: Colors.white),
+                  ),
                 ],
               ),
             ),
@@ -54,7 +69,7 @@ class _HomepageState extends State<Homepage> {
 
   Future<Map> _getGifs() async {
     http.Response response;
-    if (_search == null) {
+    if (_search == null || _search!.isEmpty) {
       response = await http.get(
         Uri.parse(
           "https://api.giphy.com/v1/gifs/trending?api_key=Xmoh3lEaWH1mIxlKy4KX7xC6lOhJN6vn&limit=19&offset=0&rating=g&bundle=messaging_non_clips",
@@ -72,7 +87,7 @@ class _HomepageState extends State<Homepage> {
 
   int getGIFCount(List data) {
     if (_search == null) {
-      return data.length -1;
+      return data.length - 1;
     } else {
       return data.length + 1;
     }
